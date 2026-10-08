@@ -19,10 +19,10 @@ function createPlayer() {
 export class GameState {
     constructor() {
         this.map = [...map];
-        this.sockets = [];
-        this.players = {};
-        this.playerIds = {};
-        this.bullets = [];
+        this.sockets = new Set();
+        this.players = new Map();
+        this.playerIds = new Map();
+        this.bullets = new Set();
         this.teamPoints = { "R": 0, "B": 0 };
         this.playerCount = { "R": 0, "B": 0 };
         this.time = 0;
