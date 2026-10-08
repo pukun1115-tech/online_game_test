@@ -43,3 +43,20 @@ export function onUpgrade(request, socket, head, gameState) {
     );
     socket.write(response);
 }
+
+function setupWebSocketConnection(socket, gameState) {
+    const player = gameState.createPlayer();
+    socket.on("data", (buffer) => {
+        handleWebSocketData(buffer, socket, gameState);
+    });
+    socket.on("end", () => {
+        //
+    });
+    socket.on("error", () => {
+        //
+    });
+}
+
+function handleWebSocketData(buffer, socket, gameState) {
+    //
+}
