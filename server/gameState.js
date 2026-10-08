@@ -30,8 +30,45 @@ export class GameState {
 
     addPlayer(socket) {
         const player = createPlayer();
-        this.players[player.playerId] = player;
-        this.sockets.push(socket);
+        this.sockets.add(socket);
+        this.players.set(player.playerId, player);
+        this.playerIds.set(socket, player);
+        this.playerCount[player.team] += 1;
+        return player;
+    }
+
+    removePlayer(socket) {
+        try {
+            if (this.sockets.has(socket)) {
+                this.sockets.delete(socket);
+            }
+            const playerId = this.getPlayerIdBySocket(socket);
+            if (playerId !== null) {
+                this.playerIds.delete(socket);
+                const player = this.getPlayerById(playerId);
+                if (player !== null) {
+                    this.players.delete(playerId);
+                    this.playerCount[player.team] -= 1;
+                }
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
+    getPlayerIdBySocket(socket) {
+        const playerId = this.playerIds.get(socket);
+        if (playerId === undefined || playerId === null) {
+            return null;
+        }
+        return playerId;
+    }
+    
+    getPlayerById(playerId) {
+        const player = this.players.get(playerId);
+        if (player === undefined || player === null) {
+            return null;
+        }
         return player;
     }
 }
