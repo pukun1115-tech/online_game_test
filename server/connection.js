@@ -45,7 +45,7 @@ export function onUpgrade(request, socket, head, gameState) {
 }
 
 function setupWebSocketConnection(socket, gameState) {
-    const player = gameState.createPlayer();
+    const player = gameState.addPlayer(socket);
     socket.on("data", (buffer) => {
         handleWebSocketData(buffer, socket, gameState);
     });
