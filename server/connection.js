@@ -60,3 +60,23 @@ function setupWebSocketConnection(socket, gameState) {
 function handleWebSocketData(buffer, socket, gameState) {
     //
 }
+
+export function sendTextFrame(socket, text) {
+    const payload = Buffer.from(text, "utf8");
+    if (payload.length <= 125) {
+        const frame = Buffer.alloc(2 + payload.length);
+        frame[0] = 0x81;
+        frame[1] = payload.length;
+        payload.copy(frame, 2);
+        socket.write(frame);
+    } else if (payload.length <= 65535) {
+        const frame = Buffer.alloc(4 + payload.length);
+        frame[0] = 0x81;
+        frame[1] = 126;
+        frame.writeUInt16BE(payload.length, 2);
+        payload.copy(frame, 4);
+        socket.write(frame);
+    } else {
+        return;
+    }
+}

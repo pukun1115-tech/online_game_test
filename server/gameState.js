@@ -1,5 +1,7 @@
 import { map } from "./map.js";
 import { TILE_SIZE, PLAYER_RADIUS, BULLET_RADIUS, MAP_WIDTH, MAP_HEIGHT } from "./config.js";
+import { sendTextFrame } from "./connection.js";
+import { checkCircleRectCollision } from "./collision.js";
 
 function createPlayerId() {
     const p = Math.random().toString(36).substring(2, 2 + 6);
@@ -26,6 +28,15 @@ export class GameState {
         this.teamPoints = { "R": 0, "B": 0 };
         this.playerCount = { "R": 0, "B": 0 };
         this.time = 0;
+    }
+
+    broadcast(all, socket, message) {
+        const text = JSON.stringify(message);
+        for (const client of this.sockets) {
+            if (all || client !== socket) {
+                sendTextFrame(client, text);
+            }
+        }
     }
 
     addPlayer(socket) {
@@ -63,12 +74,24 @@ export class GameState {
         }
         return playerId;
     }
-    
+
     getPlayerById(playerId) {
         const player = this.players.get(playerId);
         if (player === undefined || player === null) {
             return null;
         }
         return player;
+    }
+
+    checkPlayerWallColision(player) {
+        for (let y = 0; y < MAP_HEIGHT; y++) {
+            for (let x = 0; x < MAP_WIDTH; x++) {
+                if (this.map[y][x] !== "#") continue;
+                if (checkCircleRectCollision({ x: player.x, y: player.y, r: PLAYER_RADIUS }, { left: x * TILE_SIZE, right: (x + 1) * TILE_SIZE, top: y * TILE_SIZE, bottom: (y + 1) * TILE_SIZE })) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
