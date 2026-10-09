@@ -23,7 +23,7 @@ export class GameState {
         this.map = [...map];
         this.sockets = new Set();
         this.players = new Map();
-        this.playerIds = new Map();
+        this.playerIdsBySocket = new Map();
         this.bullets = new Set();
         this.teamPoints = { "R": 0, "B": 0 };
         this.playerCount = { "R": 0, "B": 0 };
@@ -43,7 +43,7 @@ export class GameState {
         const player = createPlayer();
         this.sockets.add(socket);
         this.players.set(player.playerId, player);
-        this.playerIds.set(socket, player);
+        this.playerIdsBySocket.set(socket, player.playerId);
         this.playerCount[player.team] += 1;
         return player;
     }
@@ -55,7 +55,7 @@ export class GameState {
             }
             const playerId = this.getPlayerIdBySocket(socket);
             if (playerId !== null) {
-                this.playerIds.delete(socket);
+                this.playerIdsBySocket.delete(socket);
                 const player = this.getPlayerById(playerId);
                 if (player !== null) {
                     this.players.delete(playerId);
@@ -68,7 +68,7 @@ export class GameState {
     }
 
     getPlayerIdBySocket(socket) {
-        const playerId = this.playerIds.get(socket);
+        const playerId = this.playerIdsBySocket.get(socket);
         if (playerId === undefined || playerId === null) {
             return null;
         }
