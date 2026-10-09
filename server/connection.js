@@ -48,8 +48,10 @@ export function onUpgrade(request, socket, head, gameState) {
 function setupWebSocketConnection(socket, gameState) {
     const player = gameState.addPlayer(socket);
     sendTextFrame(socket, JSON.stringify({ type: "init", map: gameState.map, player: player, teamPoints: gameState.teamPoints, playerCount: gameState.playerCount }));
+    let receiveBuffer = Buffer.alloc(0);
     socket.on("data", (buffer) => {
-        handleWebSocketData(buffer, socket, gameState);
+        receiveBuffer = Buffer.concat([receiveBuffer, buffer]);
+        receiveBuffer = handleWebSocketData(receiveBuffer, socket, gameState);
     });
     socket.on("close", () => {
         gameState.removePlayer(socket);
@@ -61,11 +63,6 @@ function setupWebSocketConnection(socket, gameState) {
         gameState.removePlayer(socket);
     });
 }
-
-function handleWebSocketData(buffer, socket, gameState) {
-    //
-}
-
 /**
  * テキストフレームを送信する
  * @param {WebSocket} socket 
@@ -195,7 +192,7 @@ function extractFrame(buffer) {
  * @param {Buffer} receiveBuffer 受け取ったデータをためるバッファ
  * @returns {Buffer | null}
  */
-function processReceivedData(socket, receiveBuffer) {
+function handleWebSocketData(receiveBuffer, socket, gameState) {
     try {
         while (receiveBuffer.length > 0) {
             const result = extractFrame(receiveBuffer);
@@ -212,8 +209,7 @@ function processReceivedData(socket, receiveBuffer) {
             }
             if (opcode === 0x1) {
                 const text = decodeTextFrame(frame);
-
-                // ここで受信したテキストを処理する
+                handlePlayerState(socket, text, gameState);
             }
         }
         return receiveBuffer;
@@ -221,5 +217,16 @@ function processReceivedData(socket, receiveBuffer) {
         console.log(error);
         socket.destroy();
         return null;
+    }
+}
+
+function handlePlayerState(socket, text, gameState) {
+    const message = JSON.parse(text);
+    if (message.type === undefined) {
+        throw new Error("不正なメッセージを受信しました。");
+    } else if (message.type === "chat") {
+        gameState.broadcast(true, null, { message: `${message.id}: ${message.message}` });
+    } else if (message.type === "playerState") {
+        gameState.updatePlayerState(socket, message.state);
     }
 }

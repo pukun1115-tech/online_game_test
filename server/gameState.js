@@ -1,5 +1,5 @@
 import { map } from "./map.js";
-import { TILE_SIZE, PLAYER_RADIUS, BULLET_RADIUS, MAP_WIDTH, MAP_HEIGHT } from "./config.js";
+import { TILE_SIZE, PLAYER_RADIUS, BULLET_RADIUS, MAP_WIDTH, MAP_HEIGHT, PLAYER_MAX_HP } from "./config.js";
 import { sendTextFrame } from "./connection.js";
 import { checkCircleRectCollision } from "./collision.js";
 
@@ -15,6 +15,7 @@ function createPlayer() {
         team: team,
         x: (team === "R" ? TILE_SIZE * 1.5 : TILE_SIZE * (MAP_WIDTH - 1.5)),
         y: (team === "R" ? TILE_SIZE * 1.5 : TILE_SIZE * (MAP_HEIGHT - 1.5)),
+        hp: PLAYER_MAX_HP,
     };
 }
 
@@ -23,6 +24,7 @@ export class GameState {
         this.map = [...map];
         this.sockets = new Set();
         this.players = new Map();
+        this.playerStates = new Map();
         this.playerIdsBySocket = new Map();
         this.bullets = new Set();
         this.teamPoints = { "R": 0, "B": 0 };
@@ -93,5 +95,25 @@ export class GameState {
             }
         }
         return false;
+    }
+
+    checkBulletWallCollision(bullet) {
+        for (let y = 0; y < MAP_HEIGHT; y++) {
+            for (let x = 0; x < MAP_WIDTH; x++) {
+                if (this.map[y][x] !== "#") continue;
+                if (checkCircleRectCollision({ x: bullet.x, y: bullet.y, r: BULLET_RADIUS }, { left: x * TILE_SIZE, right: (x + 1) * TILE_SIZE, top: y * TILE_SIZE, bottom: (y + 1) * TILE_SIZE })) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    updatePlayerState(socket, state) {
+        const playerId = this.getPlayerIdBySocket(socket);
+        if (playerId === null) {
+            throw new Error("プレイヤーが見つかりません。");
+        }
+        this.playerStates.set(playerId, state);
     }
 }

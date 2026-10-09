@@ -16,3 +16,14 @@ server.listen(PORT, "0.0.0.0", () => {
         console.log("http://localhost:3000/\r\n");
     }
 });
+
+function updateGameState() {
+    gameState.time += 1;
+    for (const p of gameState.players.values()) {
+        
+    }
+}
+
+setInterval(() => {
+    updateGameState();
+}, 1000 / 60);
